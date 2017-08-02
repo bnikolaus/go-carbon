@@ -1,6 +1,7 @@
 syntax = "proto3";
 package carbonpb;
 
+// based on original graphite proto
 // https://github.com/graphite-project/carbon/blob/master/lib/carbon/carbon.proto
 
 message Point {
@@ -15,4 +16,13 @@ message Metric {
 
 message Payload {
   repeated Metric metrics = 1;
+}
+
+message CacheRequest {
+	repeated string metrics = 1;
+}
+
+service Carbon {
+	// Same as carbonlink
+	rpc CacheQuery(CacheRequest) returns (Payload) {}
 }

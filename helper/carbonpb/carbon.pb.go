@@ -12,12 +12,18 @@
 		Point
 		Metric
 		Payload
+		CacheRequest
 */
 package carbonpb
 
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
+
+import (
+	context "golang.org/x/net/context"
+	grpc "google.golang.org/grpc"
+)
 
 import io "io"
 
@@ -75,11 +81,96 @@ func (m *Payload) GetMetrics() []*Metric {
 	return nil
 }
 
+type CacheRequest struct {
+	Metrics []string `protobuf:"bytes,1,rep,name=metrics" json:"metrics,omitempty"`
+}
+
+func (m *CacheRequest) Reset()                    { *m = CacheRequest{} }
+func (m *CacheRequest) String() string            { return proto.CompactTextString(m) }
+func (*CacheRequest) ProtoMessage()               {}
+func (*CacheRequest) Descriptor() ([]byte, []int) { return fileDescriptorCarbon, []int{3} }
+
 func init() {
 	proto.RegisterType((*Point)(nil), "carbonpb.Point")
 	proto.RegisterType((*Metric)(nil), "carbonpb.Metric")
 	proto.RegisterType((*Payload)(nil), "carbonpb.Payload")
+	proto.RegisterType((*CacheRequest)(nil), "carbonpb.CacheRequest")
 }
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion3
+
+// Client API for Carbon service
+
+type CarbonClient interface {
+	// Same as carbonlink
+	CacheQuery(ctx context.Context, in *CacheRequest, opts ...grpc.CallOption) (*Payload, error)
+}
+
+type carbonClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewCarbonClient(cc *grpc.ClientConn) CarbonClient {
+	return &carbonClient{cc}
+}
+
+func (c *carbonClient) CacheQuery(ctx context.Context, in *CacheRequest, opts ...grpc.CallOption) (*Payload, error) {
+	out := new(Payload)
+	err := grpc.Invoke(ctx, "/carbonpb.Carbon/CacheQuery", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for Carbon service
+
+type CarbonServer interface {
+	// Same as carbonlink
+	CacheQuery(context.Context, *CacheRequest) (*Payload, error)
+}
+
+func RegisterCarbonServer(s *grpc.Server, srv CarbonServer) {
+	s.RegisterService(&_Carbon_serviceDesc, srv)
+}
+
+func _Carbon_CacheQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CacheRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarbonServer).CacheQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/carbonpb.Carbon/CacheQuery",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarbonServer).CacheQuery(ctx, req.(*CacheRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Carbon_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "carbonpb.Carbon",
+	HandlerType: (*CarbonServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CacheQuery",
+			Handler:    _Carbon_CacheQuery_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: fileDescriptorCarbon,
+}
+
 func (m *Point) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -174,6 +265,39 @@ func (m *Payload) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *CacheRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CacheRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for _, s := range m.Metrics {
+			dAtA[i] = 0xa
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
+	}
+	return i, nil
+}
+
 func encodeFixed64Carbon(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	dAtA[offset+1] = uint8(v >> 8)
@@ -235,6 +359,18 @@ func (m *Payload) Size() (n int) {
 	if len(m.Metrics) > 0 {
 		for _, e := range m.Metrics {
 			l = e.Size()
+			n += 1 + l + sovCarbon(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *CacheRequest) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.Metrics) > 0 {
+		for _, s := range m.Metrics {
+			l = len(s)
 			n += 1 + l + sovCarbon(uint64(l))
 		}
 	}
@@ -532,6 +668,85 @@ func (m *Payload) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *CacheRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCarbon
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CacheRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CacheRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCarbon
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCarbon
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Metrics = append(m.Metrics, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCarbon(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthCarbon
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipCarbon(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
@@ -640,7 +855,7 @@ var (
 func init() { proto.RegisterFile("carbon.proto", fileDescriptorCarbon) }
 
 var fileDescriptorCarbon = []byte{
-	// 190 bytes of a gzipped FileDescriptorProto
+	// 247 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0x4e, 0x2c, 0x4a,
 	0xca, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf0, 0x0a, 0x92, 0x94, 0xac,
 	0xb9, 0x58, 0x03, 0xf2, 0x33, 0xf3, 0x4a, 0x84, 0x64, 0xb8, 0x38, 0x4b, 0x32, 0x73, 0x53, 0x8b,
@@ -650,7 +865,11 @@ var fileDescriptorCarbon = []byte{
 	0xd6, 0xca, 0x19, 0x04, 0xe5, 0x09, 0xa9, 0x73, 0xb1, 0x15, 0x80, 0x8c, 0x2f, 0x96, 0x60, 0x52,
 	0x60, 0xd6, 0xe0, 0x36, 0xe2, 0xd7, 0x83, 0xd9, 0xac, 0x07, 0xb6, 0x36, 0x08, 0x2a, 0xad, 0x64,
 	0xca, 0xc5, 0x1e, 0x90, 0x58, 0x99, 0x93, 0x9f, 0x98, 0x22, 0xa4, 0xc5, 0xc5, 0x0e, 0xd1, 0x5d,
-	0x2c, 0xc1, 0x08, 0xd6, 0x24, 0x80, 0xd0, 0x04, 0xb1, 0x2e, 0x08, 0xa6, 0xc0, 0x89, 0xe7, 0xc4,
-	0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x4c, 0x62, 0x03, 0xfb, 0xce,
-	0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x2d, 0x2b, 0x80, 0xd8, 0xed, 0x00, 0x00, 0x00,
+	0x2c, 0xc1, 0x08, 0xd6, 0x24, 0x80, 0xd0, 0x04, 0xb1, 0x2e, 0x08, 0xa6, 0x40, 0x49, 0x83, 0x8b,
+	0xc7, 0x39, 0x31, 0x39, 0x23, 0x35, 0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44, 0x48, 0x02, 0x55,
+	0x2f, 0x27, 0x5c, 0xa5, 0x91, 0x33, 0x17, 0x9b, 0x33, 0xd8, 0x14, 0x21, 0x4b, 0x2e, 0x2e, 0xb0,
+	0x9e, 0xc0, 0xd2, 0xd4, 0xa2, 0x4a, 0x21, 0x31, 0x84, 0xe1, 0xc8, 0x26, 0x49, 0x09, 0x22, 0xb9,
+	0x14, 0xe2, 0x30, 0x25, 0x06, 0x27, 0x9e, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c,
+	0xf0, 0x48, 0x8e, 0x31, 0x89, 0x0d, 0x1c, 0x98, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xdc,
+	0xc8, 0x58, 0x2f, 0x5c, 0x01, 0x00, 0x00,
 }
