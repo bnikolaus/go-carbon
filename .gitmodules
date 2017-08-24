@@ -127,3 +127,6 @@
 [submodule "vendor/github.com/golang/snappy"]
 	path = vendor/github.com/golang/snappy
 	url = https://github.com/golang/snappy
+[submodule "_vendor/src/google.golang.org/grpc"]
+	path = _vendor/src/google.golang.org/grpc
+	url = https://github.com/grpc/grpc-go
